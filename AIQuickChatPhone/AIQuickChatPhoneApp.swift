@@ -8,7 +8,7 @@ struct AIQuickChatPhoneApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainTabView()
                 .environmentObject(watchConnector)
                 .environmentObject(environmentDetector)
                 .onAppear {

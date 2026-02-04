@@ -8,8 +8,12 @@ class WatchConnectorService: NSObject, ObservableObject {
 
     @Published var isWatchAppInstalled: Bool = false
     @Published var isReachable: Bool = false
+    @Published var isWatchPaired: Bool = false
     @Published var lastSentContext: EnvironmentContext?
     @Published var lastError: String?
+
+    /// Alias for consistency
+    var isWatchReachable: Bool { isReachable }
 
     private var session: WCSession?
 
@@ -114,6 +118,41 @@ class WatchConnectorService: NSObject, ObservableObject {
         }
     }
 
+    /// Send custom phrases to watch (alternative signature)
+    func sendCustomPhrases(_ phrases: [String], scenario: String) {
+        sendCustomPhrases(phrases, for: scenario)
+    }
+
+    /// Send context with explicit phrases to watch
+    func sendContextToWatch(_ context: EnvironmentContext, phrases: [String]) {
+        guard let session = session else {
+            lastError = "WatchConnectivity not available"
+            return
+        }
+
+        let message: [String: Any] = [
+            "type": "context_update",
+            "environmentType": context.type.rawValue,
+            "confidence": context.confidence,
+            "source": context.source.rawValue,
+            "phrases": phrases,
+            "placeName": context.details?.placeName ?? "",
+            "sceneDescription": context.details?.sceneDescription ?? "",
+            "timestamp": Date().timeIntervalSince1970
+        ]
+
+        if session.isReachable {
+            session.sendMessage(message, replyHandler: { reply in
+                print("Watch acknowledged context with phrases")
+            }, errorHandler: { error in
+                print("Failed to send context with phrases: \(error)")
+                session.transferUserInfo(message)
+            })
+        } else {
+            session.transferUserInfo(message)
+        }
+    }
+
     /// Request current status from watch
     func requestWatchStatus() {
         guard let session = session, session.isReachable else { return }
@@ -133,6 +172,7 @@ extension WatchConnectorService: WCSessionDelegate {
         DispatchQueue.main.async {
             self.isWatchAppInstalled = session.isWatchAppInstalled
             self.isReachable = session.isReachable
+            self.isWatchPaired = session.isPaired
 
             if let error = error {
                 self.lastError = error.localizedDescription
