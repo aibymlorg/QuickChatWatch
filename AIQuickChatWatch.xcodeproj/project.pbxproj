@@ -37,6 +37,8 @@
 		AAA00028 /* PushNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB00029; };
 		AAA00029 /* BackgroundTaskService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB00030; };
 		AAA00030 /* InstructionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB00031; };
+		AAA00031 /* VoiceInputService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB00032; };
+		AAA00032 /* VoiceInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB00033; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -72,6 +74,8 @@
 		AAB00029 /* PushNotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushNotificationService.swift; sourceTree = "<group>"; };
 		AAB00030 /* BackgroundTaskService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundTaskService.swift; sourceTree = "<group>"; };
 		AAB00031 /* InstructionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstructionHandler.swift; sourceTree = "<group>"; };
+		AAB00032 /* VoiceInputService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceInputService.swift; sourceTree = "<group>"; };
+		AAB00033 /* VoiceInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceInputView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -140,6 +144,7 @@
 				AAB00029 /* PushNotificationService.swift */,
 				AAB00030 /* BackgroundTaskService.swift */,
 				AAB00031 /* InstructionHandler.swift */,
+				AAB00032 /* VoiceInputService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -179,6 +184,7 @@
 			children = (
 				AAB00019 /* OfflineBanner.swift */,
 				AAB00020 /* TypeMessageView.swift */,
+				AAB00033 /* VoiceInputView.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -309,6 +315,8 @@
 				AAA00028 /* PushNotificationService.swift in Sources */,
 				AAA00029 /* BackgroundTaskService.swift in Sources */,
 				AAA00030 /* InstructionHandler.swift in Sources */,
+				AAA00031 /* VoiceInputService.swift in Sources */,
+				AAA00032 /* VoiceInputView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

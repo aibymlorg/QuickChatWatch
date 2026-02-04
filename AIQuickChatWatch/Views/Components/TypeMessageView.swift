@@ -6,7 +6,8 @@ struct TypeMessageView: View {
     @Binding var isPresented: Bool
     let onSpeak: () -> Void
 
-    @State private var showDictation = false
+    @ObservedObject private var voiceService = VoiceInputService.shared
+    @State private var isDictating = false
 
     var body: some View {
         VStack(spacing: 12) {
@@ -35,13 +36,23 @@ struct TypeMessageView: View {
             HStack(spacing: 12) {
                 // Dictation button
                 Button {
-                    showDictation = true
+                    startDictation()
                 } label: {
-                    Image(systemName: "mic.fill")
-                        .font(.title3)
-                        .frame(width: 44, height: 44)
-                        .background(Color.blue.opacity(0.2))
-                        .cornerRadius(8)
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(isDictating ? Color.red : Color.blue.opacity(0.2))
+                            .frame(width: 44, height: 44)
+
+                        if isDictating {
+                            Image(systemName: "stop.fill")
+                                .font(.title3)
+                                .foregroundColor(.white)
+                        } else {
+                            Image(systemName: "mic.fill")
+                                .font(.title3)
+                                .foregroundColor(.blue)
+                        }
+                    }
                 }
                 .buttonStyle(.plain)
 
@@ -64,6 +75,17 @@ struct TypeMessageView: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(text.isEmpty)
+            }
+
+            // Dictation status
+            if isDictating {
+                HStack {
+                    ProgressView()
+                        .scaleEffect(0.7)
+                    Text("Listening...")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
             }
 
             // Quick phrases
@@ -92,6 +114,12 @@ struct TypeMessageView: View {
             }
         }
         .padding()
+        .onAppear {
+            setupDictationCallback()
+        }
+        .onDisappear {
+            voiceService.stopListening()
+        }
     }
 
     private let quickPhrases = [
@@ -101,6 +129,25 @@ struct TypeMessageView: View {
         "Thank you",
         "Please wait"
     ]
+
+    private func setupDictationCallback() {
+        voiceService.onDictationComplete = { dictatedText in
+            text = dictatedText
+            isDictating = false
+        }
+    }
+
+    private func startDictation() {
+        if isDictating {
+            voiceService.stopListening()
+            isDictating = false
+        } else {
+            isDictating = true
+            Task {
+                await voiceService.startDictation()
+            }
+        }
+    }
 }
 
 /// Compact version for watch
@@ -109,6 +156,9 @@ struct CompactTypeMessageView: View {
     let onSpeak: () -> Void
     let onClose: () -> Void
 
+    @ObservedObject private var voiceService = VoiceInputService.shared
+    @State private var isDictating = false
+
     var body: some View {
         VStack(spacing: 8) {
             HStack {
@@ -116,6 +166,17 @@ struct CompactTypeMessageView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
                 Spacer()
+
+                // Dictation button
+                Button {
+                    toggleDictation()
+                } label: {
+                    Image(systemName: isDictating ? "stop.fill" : "mic.fill")
+                        .font(.caption)
+                        .foregroundColor(isDictating ? .red : .blue)
+                }
+                .buttonStyle(.plain)
+
                 Button(action: onClose) {
                     Image(systemName: "xmark")
                         .font(.caption)
@@ -123,8 +184,23 @@ struct CompactTypeMessageView: View {
                 .buttonStyle(.plain)
             }
 
-            TextField("Message", text: $text)
-                .font(.caption)
+            if isDictating {
+                // Dictation mode
+                VStack(spacing: 4) {
+                    Image(systemName: "waveform")
+                        .font(.title2)
+                        .foregroundColor(.red)
+
+                    Text(voiceService.transcribedText.isEmpty ? "Listening..." : voiceService.transcribedText)
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                        .lineLimit(2)
+                }
+                .frame(height: 50)
+            } else {
+                TextField("Message", text: $text)
+                    .font(.caption)
+            }
 
             Button {
                 if !text.isEmpty {
@@ -148,6 +224,35 @@ struct CompactTypeMessageView: View {
         .padding(8)
         .background(Color.black.opacity(0.9))
         .cornerRadius(12)
+        .onAppear {
+            setupCallback()
+        }
+        .onDisappear {
+            voiceService.stopListening()
+        }
+    }
+
+    private func setupCallback() {
+        voiceService.onDictationComplete = { dictatedText in
+            text = dictatedText
+            isDictating = false
+        }
+    }
+
+    private func toggleDictation() {
+        if isDictating {
+            voiceService.stopListening()
+            // Use whatever was transcribed
+            if !voiceService.transcribedText.isEmpty {
+                text = voiceService.transcribedText
+            }
+            isDictating = false
+        } else {
+            isDictating = true
+            Task {
+                await voiceService.startDictation()
+            }
+        }
     }
 }
 

@@ -9,6 +9,7 @@ struct PhraseGridView: View {
     @ObservedObject private var reachability = ReachabilityService.shared
 
     @State private var showSettings = false
+    @State private var showVoiceInput = false
 
     private let columns = [
         GridItem(.flexible(), spacing: 4),
@@ -54,6 +55,11 @@ struct PhraseGridView: View {
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView()
+            }
+            .sheet(isPresented: $showVoiceInput) {
+                VoiceInputView(isPresented: $showVoiceInput) { command in
+                    handleVoiceCommand(command)
+                }
             }
         }
     }
@@ -120,7 +126,21 @@ struct PhraseGridView: View {
     }
 
     private var bottomToolbar: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 12) {
+            // Voice button
+            Button {
+                showVoiceInput = true
+            } label: {
+                VStack(spacing: 2) {
+                    Image(systemName: "mic.fill")
+                        .font(.system(size: 14))
+                    Text("Voice")
+                        .font(.system(size: 9))
+                }
+                .foregroundColor(.white)
+            }
+            .buttonStyle(.plain)
+
             // Type button
             Button {
                 viewModel.showKeyboard = true
@@ -174,6 +194,37 @@ struct PhraseGridView: View {
                 }
             )
             .padding()
+        }
+    }
+
+    // MARK: - Voice Command Handling
+
+    private func handleVoiceCommand(_ command: VoiceCommand) {
+        switch command {
+        case .speak(let text):
+            Task {
+                await ttsService.speak(text)
+            }
+
+        case .loadContextPack(let scenario):
+            Task {
+                await viewModel.generateContextPack(scenario: scenario)
+            }
+
+        case .openSettings:
+            showSettings = true
+
+        case .sync:
+            Task {
+                await viewModel.sync()
+            }
+
+        case .stop:
+            viewModel.stopSpeaking()
+
+        case .emergency:
+            // Activate emergency mode
+            NotificationCenter.default.post(name: .emergencyActivated, object: nil)
         }
     }
 }
