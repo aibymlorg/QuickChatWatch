@@ -7,9 +7,11 @@ struct PhraseGridView: View {
     @StateObject private var viewModel = PhraseGridViewModel()
     @ObservedObject private var ttsService = TTSService.shared
     @ObservedObject private var reachability = ReachabilityService.shared
+    @ObservedObject private var phoneConnector = PhoneConnectorService.shared
 
     @State private var showSettings = false
     @State private var showVoiceInput = false
+    @State private var showContextPhrases = true
 
     private let columns = [
         GridItem(.flexible(), spacing: 4),
@@ -27,15 +29,24 @@ struct PhraseGridView: View {
                 )
                 .ignoresSafeArea()
 
-                VStack(spacing: 8) {
+                VStack(spacing: 6) {
                     // Header
                     headerView
+
+                    // Context banner (from iPhone)
+                    if let context = viewModel.currentContext {
+                        contextBannerView(context)
+                    }
 
                     // Status indicators
                     statusBar
 
-                    // Phrase grid
-                    phraseGrid
+                    // Phrase grid - show context phrases if available
+                    if showContextPhrases && !viewModel.contextPhrases.isEmpty {
+                        contextPhraseGrid
+                    } else {
+                        phraseGrid
+                    }
 
                     // Bottom toolbar
                     bottomToolbar
@@ -74,6 +85,13 @@ struct PhraseGridView: View {
 
             Spacer()
 
+            // iPhone connection indicator
+            if phoneConnector.isPhoneReachable {
+                Image(systemName: "iphone")
+                    .font(.system(size: 10))
+                    .foregroundColor(.green)
+            }
+
             OfflineIndicator()
 
             Button {
@@ -85,6 +103,32 @@ struct PhraseGridView: View {
             }
             .buttonStyle(.plain)
         }
+    }
+
+    private func contextBannerView(_ context: ReceivedContext) -> some View {
+        Button {
+            showContextPhrases.toggle()
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "iphone")
+                    .font(.system(size: 8))
+                Image(systemName: context.icon)
+                    .font(.system(size: 10))
+                Text(context.displayName)
+                    .font(.system(size: 10, weight: .medium))
+
+                Spacer()
+
+                Image(systemName: showContextPhrases ? "chevron.up" : "chevron.down")
+                    .font(.system(size: 8))
+            }
+            .foregroundColor(.white)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(Color.purple.opacity(0.8))
+            .cornerRadius(8)
+        }
+        .buttonStyle(.plain)
     }
 
     private var statusBar: some View {
@@ -104,8 +148,40 @@ struct PhraseGridView: View {
             }
 
             Spacer()
+
+            // Toggle for context/saved phrases
+            if !viewModel.contextPhrases.isEmpty {
+                Button {
+                    showContextPhrases.toggle()
+                } label: {
+                    Text(showContextPhrases ? "Saved" : "Context")
+                        .font(.system(size: 8))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.white.opacity(0.2))
+                        .cornerRadius(4)
+                }
+                .buttonStyle(.plain)
+            }
         }
         .frame(height: 16)
+    }
+
+    private var contextPhraseGrid: some View {
+        ScrollView {
+            LazyVGrid(columns: columns, spacing: 4) {
+                ForEach(viewModel.contextPhrases.prefix(8), id: \.self) { phrase in
+                    ContextPhraseButton(
+                        text: phrase,
+                        isPlaying: ttsService.currentText == phrase && ttsService.status == .playing,
+                        onTap: {
+                            viewModel.speakContextPhrase(phrase)
+                        }
+                    )
+                    .frame(height: 50)
+                }
+            }
+        }
     }
 
     private var phraseGrid: some View {
@@ -226,6 +302,34 @@ struct PhraseGridView: View {
             // Activate emergency mode
             NotificationCenter.default.post(name: .emergencyActivated, object: nil)
         }
+    }
+}
+
+// MARK: - Context Phrase Button
+
+struct ContextPhraseButton: View {
+    let text: String
+    let isPlaying: Bool
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            Text(text)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundColor(isPlaying ? .purple : .primary)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.7)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(4)
+                .background(isPlaying ? Color.purple.opacity(0.3) : Color.white.opacity(0.95))
+                .cornerRadius(8)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.purple.opacity(0.5), lineWidth: 1)
+                )
+        }
+        .buttonStyle(.plain)
     }
 }
 

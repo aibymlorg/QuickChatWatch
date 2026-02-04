@@ -11,10 +11,13 @@ final class PhraseGridViewModel: ObservableObject {
     @Published var showKeyboard: Bool = false
     @Published var customText: String = ""
     @Published var error: String?
+    @Published var currentContext: ReceivedContext?
+    @Published var contextPhrases: [String] = []
 
     private let ttsService = TTSService.shared
     private let reachability = ReachabilityService.shared
     private let syncService = SyncService.shared
+    private let phoneConnector = PhoneConnectorService.shared
     private var cancellables = Set<AnyCancellable>()
 
     var modelContext: ModelContext?
@@ -86,6 +89,54 @@ final class PhraseGridViewModel: ObservableObject {
                 }
             }
             .store(in: &cancellables)
+
+        // Listen for context updates from iPhone
+        NotificationCenter.default.publisher(for: .phoneContextReceived)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] notification in
+                if let context = notification.userInfo?["context"] as? ReceivedContext,
+                   let phrases = notification.userInfo?["phrases"] as? [String] {
+                    self?.handlePhoneContext(context, phrases: phrases)
+                }
+            }
+            .store(in: &cancellables)
+
+        // Listen for direct phrase updates from iPhone
+        NotificationCenter.default.publisher(for: .phrasesReceived)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] notification in
+                if let phrases = notification.userInfo?["phrases"] as? [String] {
+                    self?.updateContextPhrases(phrases)
+                }
+            }
+            .store(in: &cancellables)
+    }
+
+    // MARK: - Phone Context Handling
+
+    private func handlePhoneContext(_ context: ReceivedContext, phrases: [String]) {
+        currentContext = context
+        contextPhrases = phrases
+
+        // Haptic to alert user of new context
+        HapticManager.shared.notification()
+    }
+
+    private func updateContextPhrases(_ phrases: [String]) {
+        contextPhrases = phrases
+        HapticManager.shared.notification()
+    }
+
+    /// Speak a context phrase (from iPhone)
+    func speakContextPhrase(_ phrase: String) {
+        Task {
+            await ttsService.speak(phrase)
+
+            // Report to iPhone
+            phoneConnector.reportPhraseSpoken(phrase)
+
+            logEvent(.phraseSpoken(phrase, sessionId: sessionId))
+        }
     }
 
     // MARK: - Data Loading
