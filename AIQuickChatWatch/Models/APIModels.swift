@@ -195,6 +195,40 @@ struct GeminiTTSRequest: Codable {
     }
 }
 
+// MARK: - Push Notifications & Instructions
+
+struct RegisterDeviceRequest: Codable {
+    let token: String
+    let platform: String
+    let deviceModel: String
+
+    enum CodingKeys: String, CodingKey {
+        case token, platform
+        case deviceModel = "device_model"
+    }
+}
+
+struct PendingInstructionsResponse: Codable {
+    let instructions: [ServerInstruction]
+}
+
+struct SendInstructionRequest: Codable {
+    let targetUserId: String
+    let type: String
+    let data: InstructionData
+
+    enum CodingKeys: String, CodingKey {
+        case targetUserId = "target_user_id"
+        case type, data
+    }
+
+    struct InstructionData: Codable {
+        let scenario: String?
+        let phrases: [String]?
+        let message: String?
+    }
+}
+
 // MARK: - Error Response
 
 struct APIError: Codable, Error {

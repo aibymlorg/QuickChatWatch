@@ -34,6 +34,9 @@
 		AAA00025 /* ResponseModeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB00025; };
 		AAA00026 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB00026; };
 		AAA00027 /* LanguagePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB00027; };
+		AAA00028 /* PushNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB00029; };
+		AAA00029 /* BackgroundTaskService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB00030; };
+		AAA00030 /* InstructionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB00031; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -66,6 +69,9 @@
 		AAB00026 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		AAB00027 /* LanguagePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguagePickerView.swift; sourceTree = "<group>"; };
 		AAB00028 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		AAB00029 /* PushNotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushNotificationService.swift; sourceTree = "<group>"; };
+		AAB00030 /* BackgroundTaskService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundTaskService.swift; sourceTree = "<group>"; };
+		AAB00031 /* InstructionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstructionHandler.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -131,6 +137,9 @@
 				AAB00012 /* GeminiService.swift */,
 				AAB00013 /* TTSService.swift */,
 				AAB00014 /* SyncService.swift */,
+				AAB00029 /* PushNotificationService.swift */,
+				AAB00030 /* BackgroundTaskService.swift */,
+				AAB00031 /* InstructionHandler.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -297,6 +306,9 @@
 				AAA00025 /* ResponseModeView.swift in Sources */,
 				AAA00026 /* SettingsView.swift in Sources */,
 				AAA00027 /* LanguagePickerView.swift in Sources */,
+				AAA00028 /* PushNotificationService.swift in Sources */,
+				AAA00029 /* BackgroundTaskService.swift in Sources */,
+				AAA00030 /* InstructionHandler.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

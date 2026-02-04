@@ -34,12 +34,58 @@ final class PhraseGridViewModel: ObservableObject {
 
     init() {
         setupBindings()
+        setupNotificationObservers()
     }
 
     private func setupBindings() {
         ttsService.$status
             .receive(on: DispatchQueue.main)
             .assign(to: &$ttsStatus)
+    }
+
+    private func setupNotificationObservers() {
+        // Listen for phrase updates from remote instructions
+        NotificationCenter.default.publisher(for: .phrasesUpdated)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.loadPhrases()
+                HapticManager.shared.notification()
+            }
+            .store(in: &cancellables)
+
+        // Listen for sync requests
+        NotificationCenter.default.publisher(for: .syncRequested)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    await self?.sync()
+                }
+            }
+            .store(in: &cancellables)
+
+        // Listen for speak requests from remote
+        NotificationCenter.default.publisher(for: .speakRequested)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] notification in
+                if let message = notification.userInfo?["message"] as? String {
+                    Task { @MainActor [weak self] in
+                        await self?.ttsService.speak(message)
+                    }
+                }
+            }
+            .store(in: &cancellables)
+
+        // Listen for context pack requests from remote
+        NotificationCenter.default.publisher(for: .contextPackRequested)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] notification in
+                if let scenario = notification.userInfo?["scenario"] as? String {
+                    Task { @MainActor [weak self] in
+                        await self?.generateContextPack(scenario: scenario)
+                    }
+                }
+            }
+            .store(in: &cancellables)
     }
 
     // MARK: - Data Loading

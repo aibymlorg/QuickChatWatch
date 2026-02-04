@@ -113,6 +113,53 @@ actor APIClient {
         }
     }
 
+    // MARK: - Push Notifications & Instructions
+
+    /// Register device token for push notifications
+    func registerDeviceToken(_ token: String) async throws {
+        let request = RegisterDeviceRequest(
+            token: token,
+            platform: "watchos",
+            deviceModel: getDeviceModel()
+        )
+        let _: EmptyResponse = try await post("/api/devices/register", body: request)
+    }
+
+    /// Unregister device token
+    func unregisterDeviceToken(_ token: String) async throws {
+        try await delete("/api/devices/\(token)")
+    }
+
+    /// Get pending instructions from server
+    func getPendingInstructions() async throws -> [ServerInstruction] {
+        let response: PendingInstructionsResponse = try await get("/api/instructions/pending")
+        return response.instructions
+    }
+
+    /// Mark an instruction as processed
+    func markInstructionProcessed(_ instructionId: String) async throws {
+        let _: EmptyResponse = try await post(
+            "/api/instructions/\(instructionId)/processed",
+            body: EmptyBody()
+        )
+    }
+
+    /// Send instruction to another device (caregiver -> patient)
+    func sendInstruction(_ instruction: SendInstructionRequest) async throws {
+        let _: EmptyResponse = try await post("/api/instructions/send", body: instruction)
+    }
+
+    private func getDeviceModel() -> String {
+        var systemInfo = utsname()
+        uname(&systemInfo)
+        let modelCode = withUnsafePointer(to: &systemInfo.machine) {
+            $0.withMemoryRebound(to: CChar.self, capacity: 1) {
+                String(validatingUTF8: $0)
+            }
+        }
+        return modelCode ?? "Apple Watch"
+    }
+
     // MARK: - Private HTTP Methods
 
     private func get<T: Decodable>(_ endpoint: String, authenticated: Bool = true) async throws -> T {
